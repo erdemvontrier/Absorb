@@ -32,6 +32,10 @@ public class Enemy : MonoBehaviour
 
     private bool _isPlayerDead;
 
+    private HitFlash _hitFlash;
+
+    private bool didSeePlayer;
+
 
 
     private void Awake()
@@ -40,12 +44,13 @@ public class Enemy : MonoBehaviour
         _navMeshAgent = GetComponent<NavMeshAgent>();
         _animator = GetComponentInChildren<Animator>();
         capsuleCollider = GetComponent<CapsuleCollider>();
+        _hitFlash = GetComponent<HitFlash>();
     }
 
     public void StartEnemy(Player player)
     {
         _currentHealth = startHealth;
-        healthBar.SetHealthBar(1);
+        healthBar.SetHealthBar(1);  
         _player = player;
     }
 
@@ -53,7 +58,7 @@ public class Enemy : MonoBehaviour
     private void Update()
     {
        
-        if (actionState == ActionState.Dead || _isPlayerDead)
+        if (actionState == ActionState.Dead || _player.gameDirector.gameState != GameState.GamePlay)
         {
             return;
         }
@@ -83,6 +88,12 @@ public class Enemy : MonoBehaviour
         if (actionState == ActionState.WalkTowardsPlayer)
         {
             WalkTowardsPlayer();
+            if (!didSeePlayer)
+            {
+                didSeePlayer = true;
+                _player.gameDirector.audioManager.PlayZombieScreamAS();
+            }
+
         }
         else if (actionState == ActionState.WalkTowardsPlayerLastSeenPos)
         {
@@ -133,6 +144,11 @@ public class Enemy : MonoBehaviour
 
     public void SetPlayerDead()
     {
+        if (this == null || _navMeshAgent == null)
+        {
+            return;
+        }
+
         _isPlayerDead = true;
         _navMeshAgent.isStopped = true;
         SwitchAnimation(AnimationState.Idle);
@@ -179,12 +195,15 @@ public class Enemy : MonoBehaviour
     public void GetHit(int damage)
     {
         _currentHealth -= damage;
-        healthBar.SetHealthBar((float)_currentHealth / startHealth); 
+        healthBar.SetHealthBar((float)_currentHealth / startHealth);
         //Mevcut canýnýn baþlangýç can'a oranýný oranla float'a zorla. sethealthbar'a gönder.
-        if( _currentHealth <= 0)
+        _hitFlash.PlayHitFlash();
+        _player.gameDirector.audioManager.playZombieImpactAS();
+        if ( _currentHealth <= 0)
         {
             Die(); 
         }
+       
     }
 
     private void Die()

@@ -5,10 +5,16 @@ public class GameDirector : MonoBehaviour
 {
     public LevelManager levelManager;
     public Player player;
+    public AudioManager audioManager;
+
+    public UIManager uiManager;
+
+    public GameState gameState;
 
     private void Start()
     {
-        RestartLevel();
+        uiManager.ShowMainMenu();
+        gameState = GameState.MainMenu;
     }
 
     private void Update()
@@ -40,7 +46,7 @@ public class GameDirector : MonoBehaviour
         RestartLevel();
     }
 
-    private void LoadNextLevel()
+    public void LoadNextLevel()
     {
         levelManager.currentLevelNo++;
         //Eðer current level max ise veya dahada büyütülmeye çalýþýlýyorsa max level'da kalsýn
@@ -53,8 +59,10 @@ public class GameDirector : MonoBehaviour
 
     public void RestartLevel()
     {
+        gameState = GameState.GamePlay;
         levelManager.RestartLevelManager();//Level manager sýfýrlansýn
         player.RestartPlayer();//player sýfýrlansýn
+        audioManager.PlayAmbiantSound();
     }
 
     public void PlayerDied()
@@ -65,13 +73,25 @@ public class GameDirector : MonoBehaviour
 
     public void LevelCompleted()
     {
-        print("Level Completed");
-        Invoke(nameof(LoadNextLevel),2);
+        gameState = GameState.WinUI;
+        audioManager.PlayVictoryAS();
+        audioManager.StopAmbiantSound();
+        uiManager.ShowWinUI(3);
     }
-
+        
     void LevelFailed()
     {
-        print("Level Failed");
-        Invoke(nameof(RestartLevel),4);
+        gameState = GameState.LoseUI;
+        uiManager.ShowFailUI(3);
+        audioManager.PlayFailAS();
+        audioManager.StopAmbiantSound();
     }
+}
+
+public enum GameState
+{
+    MainMenu,
+    GamePlay,
+    WinUI,
+    LoseUI,
 }

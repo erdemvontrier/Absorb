@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
+    public GameDirector gameDirector;
     public WeaponType weaponType;
 
     public Bullet bulletPrefab;
@@ -10,11 +11,13 @@ public class Weapon : MonoBehaviour
     public float attackRate;
     private float _timeSinceLastShoot;
 
+    public ParticleSystem muzzlePS;
+
     private void Update()
     {
         _timeSinceLastShoot += Time.deltaTime;
 
-        if (Input.GetMouseButton(0) && _timeSinceLastShoot > attackRate)
+        if (gameDirector.gameState == GameState.GamePlay && Input.GetMouseButton(0) && _timeSinceLastShoot > attackRate)
         {
             Shoot();
         }
@@ -27,6 +30,8 @@ public class Weapon : MonoBehaviour
         newBullet.transform.LookAt(shootPosition.position + shootPosition.forward);
         newBullet.StartBullet(this);
         _timeSinceLastShoot = 0;
+        muzzlePS.Play();
+        gameDirector.audioManager.playShootAS();
     }
 }
 

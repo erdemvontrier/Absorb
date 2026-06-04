@@ -31,8 +31,10 @@ public class Bullet : MonoBehaviour
 
         if (other.CompareTag("Enemy"))
         {
+
             Destroy(gameObject);
             other.GetComponent<Enemy>().GetHit(1); //Eðer mermi düþmana çarparsa mermi yok olsun, GetHit methodu çalýþsýn.
+
         }
     }
 }

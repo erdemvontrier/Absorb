@@ -9,11 +9,13 @@ public class PlayerMovement : MonoBehaviour
     public float jumpForce;
     private Rigidbody _rb;
 
-    public LayerMask jumpLayers;
+    public LayerMask jumpLayers; 
     public LayerMask lookLayers;
 
-    private Animator _animator;
 
+    public float edgeCheckDistance = 0.6f;
+
+    private Animator _animator;
     private bool _isJumping;
     private Player _player;
 
@@ -24,14 +26,22 @@ public class PlayerMovement : MonoBehaviour
         _player = GetComponent<Player>();
     }
 
+    public void RestartPlayerMovement()
+    {
+        _rb.constraints = RigidbodyConstraints.FreezeRotation;
+        ChangedAnimationsState("Idle");
+    }
+
     private void Update()
     {
-        if (_player.isDead)
+        var direction = Vector3.zero;
+        if (_player.gameDirector.gameState != GameState.GamePlay || _player.isDead)
         {
+            _rb.linearVelocity = Vector3.zero;
             return;
         }
+
         //Hareket kontrolleri.
-        var direction = Vector3.zero;
         if (Input.GetKey(KeyCode.W))
         {
             direction += Vector3.forward;
@@ -64,11 +74,32 @@ public class PlayerMovement : MonoBehaviour
         {
             Jump();
         }
+
+        if (direction.magnitude > 0 && !CheckEdgeAhead(direction))
+        {
+            direction = Vector3.zero; 
+        }
+
         MovePlayer(direction, speed);
         LookAtMouse();
 
         var angle = Vector3.SignedAngle(transform.forward, direction, Vector3.up);
-        SetWalkDirection(angle  );
+        SetWalkDirection(angle);
+    }
+
+
+    private bool CheckEdgeAhead(Vector3 dir)
+    {
+        Vector3 checkPosition = transform.position + (dir.normalized * edgeCheckDistance);
+
+       
+        if (Physics.Raycast(checkPosition + Vector3.up * 0.1f, Vector3.down, 1f, jumpLayers))
+        {
+            return true; // Iþýn zemine çarptý, önümüz güvenli!
+        }
+
+        // Debug.DrawRay(checkPosition + Vector3.up * 0.1f, Vector3.down * 1f, Color.red, 0.1f);
+        return false; 
     }
 
     void SetWalkDirection(float angle)
@@ -92,7 +123,7 @@ public class PlayerMovement : MonoBehaviour
     //Yere düþmeden tekrar zýplama için bug fix *Raycast
     private bool CheckIfLanded()
     {
-        if (Physics.Raycast(transform.position + Vector3.up * .1f, Vector3.down ,.3f, jumpLayers))
+        if (Physics.Raycast(transform.position + Vector3.up * .1f, Vector3.down, .3f, jumpLayers))
         {
             return true;
         }
@@ -105,20 +136,19 @@ public class PlayerMovement : MonoBehaviour
         _rb.AddForce(Vector3.up * jumpForce);
         _isJumping = true;
         ChangedAnimationsState("Jump");
-
     }
 
-    void MovePlayer(Vector3 dir, float speed)   
+    void MovePlayer(Vector3 dir, float speed)
     {
         var yVelocity = _rb.linearVelocity;
 
         yVelocity.x = 0;
         yVelocity.z = 0;
         _rb.linearVelocity = dir.normalized * speed + yVelocity;
-        
-        if (!_isJumping && !_player.didWin)
+
+        if (!_isJumping)
         {
-            if(dir.magnitude > 0) 
+            if (dir.magnitude > 0)
             {
                 ChangedAnimationsState("Run");
             }
@@ -127,7 +157,6 @@ public class PlayerMovement : MonoBehaviour
                 ChangedAnimationsState("Idle");
             }
         }
-        
     }
 
     public void ChangedAnimationsState(string key)
@@ -139,5 +168,4 @@ public class PlayerMovement : MonoBehaviour
         _animator.SetBool("Win", false);
         _animator.SetBool(key, true);
     }
-
 }

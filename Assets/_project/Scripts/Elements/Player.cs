@@ -12,7 +12,6 @@ public class Player : MonoBehaviour
     private PlayerMovement _playerMovement;
 
     public bool isDead;
-    public bool didWin;
 
     private void Awake()
     {
@@ -27,12 +26,11 @@ public class Player : MonoBehaviour
     }
     public void RestartPlayer()
     {
+        _playerMovement.RestartPlayerMovement();
         transform.position = Vector3.zero; //Konum sýfýrlanýyor
         _currentHealth = startHealth;
         healthBar.SetHealthBar(1);
-        _playerMovement.ChangedAnimationsState("Idle");
         isDead = false;
-        didWin = false;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -42,7 +40,6 @@ public class Player : MonoBehaviour
             other.gameObject.SetActive(false);
             _playerMovement.ChangedAnimationsState("Win");
             gameDirector.LevelCompleted();
-            didWin = true;
         }
     }
 
